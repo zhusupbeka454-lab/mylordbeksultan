@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>MyLordBeksultan Chat</title>
+  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+  <style>
+    body { font-family: sans-serif; background: #f0f0f0; }
+    #chat { max-width: 500px; margin: 20px auto; padding: 10px; background: white; border-radius: 8px; }
+    #messages { height: 300px; overflow-y: auto; border: 1px solid #ccc; padding: 5px; margin-bottom: 5px; }
+    input { padding: 5px; margin: 2px 0; width: 100%; }
+    button { padding: 5px; width: 100%; background: blue; color: white; border: none; border-radius: 4px; }
+  </style>
+</head>
+<body>
+  <div id="chat">
+    <h2>MyLordBeksultan Chat</h2>
+    <input id="name" placeholder="Ваше имя" />
+    <input id="room" placeholder="ID комнаты (например 123)" />
+    <button onclick="joinRoom()">Присоединиться</button>
+    <div id="messages"></div>
+    <input id="message" placeholder="Сообщение..." />
+    <button onclick="sendMessage()">Отправить</button>
+  </div>
+
+  <script>
+    let socket;
+    let room;
+
+    function joinRoom() {
+      const name = document.getElementById("name").value;
+      room = document.getElementById("room").value;
+      if(!name || !room) return alert("Введите имя и ID комнаты");
+
+      socket = io("https://mylordbeksultan-server.onrender.com");
+      socket.emit("join_room", room);
+
+      socket.on("receive_message", data => {
+        const messagesDiv = document.getElementById("messages");
+        const p = document.createElement("p");
+        p.innerHTML = `<b>${data.user}:</b> ${data.text}`;
+        messagesDiv.appendChild(p);
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+      });
+
+      socket.on("connect", () => {
+        console.log("Подключено к серверу");
+      });
+
+      alert("Вы присоединились к комнате " + room);
+    }
+
+    function sendMessage() {
+      const msgInput = document.getElementById("message");
+      const name = document.getElementById("name").value;
+      if (!socket || !msgInput.value) return;
+      socket.emit("send_message", { user: name, room: room, text: msgInput.value });
+      msgInput.value = "";
+    }
+  </script>
+</body>
+  </html>
+  
